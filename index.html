@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNAKE</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080c10;
+    --snake-head: #00ffaa;
+    --apple: #ff3355;
+    --text: #aaccbb;
+    --dead: #ff3355;
+  }
+
+  body {
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--text);
+    user-select: none;
+    overflow: hidden;
+  }
+
+  /* ── INTRO SCREEN ─────────────────────────────────────── */
+  #intro {
+    position: fixed;
+    inset: 0;
+    background: #080c10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  #intro-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .intro-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2em;
+  }
+
+  .intro-eyebrow {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.5em;
+    color: #00ffaa88;
+    text-transform: uppercase;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeUp 0.6s 0.2s forwards;
+  }
+
+  .intro-title {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: clamp(4rem, 16vw, 8rem);
+    letter-spacing: 0.15em;
+    line-height: 1;
+    color: #00ffaa;
+    text-shadow:
+      0 0 30px #00ffaacc,
+      0 0 80px #00ffaa66,
+      0 0 160px #00ffaa22;
+    opacity: 0;
+    animation: titlePop 0.8s 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
+  }
+
+  .intro-title .apple-letter {
+    color: #ff3355;
+    text-shadow:
+      0 0 30px #ff3355cc,
+      0 0 80px #ff335566;
+    display: inline-block;
+    animation: appleBob 2s 1.5s ease-in-out infinite;
+  }
+
+  .intro-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: clamp(0.7rem, 2vw, 0.9rem);
+    letter-spacing: 0.3em;
+    color: #aaccbb99;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeUp 0.6s 1s forwards;
+  }
+
+  .intro-btn {
+    margin-top: 1.5em;
+    background: none;
+    border: 1px solid #00ffaa;
+    color: #00ffaa;
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(0.75rem, 2.5vw, 1rem);
+    letter-spacing: 0.3em;
+    padding: 0.75em 2.5em;
+    cursor: pointer;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeUp 0.6s 1.4s forwards, btnPulse 2s 2s ease-in-out infinite;
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+  .intro-btn:hover {
+    background: #00ffaa22;
+    box-shadow: 0 0 30px #00ffaa66;
+  }
+
+  .scanlines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0,0,0,0.18) 3px,
+      rgba(0,0,0,0.18) 4px
+    );
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .intro-hint {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: #aaccbb44;
+    opacity: 0;
+    animation: fadeUp 0.6s 1.8s forwards;
+  }
+
+  .intro-class {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+    letter-spacing: 0.35em;
+    color: #00ffaa;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeUp 0.6s 2.1s forwards;
+    text-shadow: 0 0 12px #00ffaa66;
+    border: 1px solid #00ffaa33;
+    padding: 0.35em 1.2em;
+    border-radius: 2px;
+  }
+
+  .dev-credits {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45em;
+    opacity: 0;
+    animation: fadeUp 0.6s 2.4s forwards;
+    margin-top: 0.3em;
+  }
+
+  .dev-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.4em;
+    color: #aaccbb55;
+    text-transform: uppercase;
+    margin-bottom: 0.1em;
+  }
+
+  .dev-list {
+    display: flex;
+    gap: 1.4em;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .dev-link {
+    position: relative;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: clamp(0.6rem, 1.6vw, 0.75rem);
+    letter-spacing: 0.12em;
+    color: #aaccbbcc;
+    text-decoration: none;
+    padding: 0.3em 0.7em;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    transition: color 0.2s, border-color 0.2s, text-shadow 0.2s, transform 0.2s;
+    overflow: hidden;
+  }
+
+  .dev-link::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, #00ffaa11, transparent);
+    transform: translateX(-100%);
+    transition: transform 0.4s;
+  }
+
+  .dev-link:hover {
+    color: #00ffaa;
+    border-color: #00ffaa55;
+    text-shadow: 0 0 10px #00ffaa88;
+    transform: translateY(-2px);
+  }
+  .dev-link:hover::before { transform: translateX(100%); }
+
+  .dev-link:active { transform: scale(0.96) translateY(0); }
+
+  .dev-fb-icon {
+    font-size: 0.65em;
+    opacity: 0.5;
+    margin-left: 0.3em;
+    vertical-align: middle;
+    transition: opacity 0.2s;
+  }
+  .dev-link:hover .dev-fb-icon { opacity: 1; }
+
+  @keyframes devShimmer {
+    0%   { text-shadow: 0 0 6px #00ffaa44; }
+    50%  { text-shadow: 0 0 14px #00ffaaaa, 0 0 30px #00ffaa44; }
+    100% { text-shadow: 0 0 6px #00ffaa44; }
+  }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(14px); }
+  }
+  @keyframes titlePop {
+    from { opacity: 0; transform: scale(0.82) translateY(20px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes appleBob {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+  }
+  @keyframes btnPulse {
+    0%,100% { box-shadow: 0 0 0px #00ffaa00; }
+    50%      { box-shadow: 0 0 22px #00ffaa55; }
+  }
+
+  /* intro → game transition */

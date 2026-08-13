@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Access</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --ink:#0B0F14;
+    --panel:#111826;
+    --line:#26313F;
+    --brass:#C9A24B;
+    --fog:#AEB9C4;
+    --white:#F2F4F7;
+    --error:#D9614F;
+    --ok:#7FBF8F;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  body{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: radial-gradient(circle at 50% 0%, #17202C 0%, var(--ink) 60%);
+    font-family:'Space Grotesk', sans-serif;
+    color:var(--white);
+    padding:24px;
+  }
+
+  .panel{
+    width:100%;
+    max-width:400px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:44px 36px 36px;
+    position:relative;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.6);
+  }
+
+  .panel::before{
+    content:"";
+    position:absolute;
+    top:0; left:0; right:0;
+    height:2px;
+    background:linear-gradient(90deg, transparent, var(--brass), transparent);
+    opacity:0.7;
+  }
+
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.25em;
+    color:var(--brass);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:18px;
+  }
+
+  .eyebrow::before{
+    content:"";
+    width:6px; height:6px;
+    background:var(--brass);
+    border-radius:50%;
+    box-shadow:0 0 8px var(--brass);
+  }
+
+  h1{
+    font-size:26px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+    margin-bottom:8px;
+  }
+
+  p.sub{
+    font-size:13.5px;
+    color:var(--fog);
+    line-height:1.5;
+    margin-bottom:32px;
+  }
+
+  form{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .field label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--fog);
+  }
+
+  .field input{
+    background:#0D131C;
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:13px 14px;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:15px;
+    color:var(--white);
+    caret-color:var(--brass);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .field input:focus{
+    outline:none;
+    border-color:var(--brass);
+    box-shadow:0 0 0 3px rgba(201,162,75,0.15);
+  }
+
+  .email-preview{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--fog);
+    min-height:16px;
+    letter-spacing:0.02em;
+  }
+
+  .email-preview.show{ color:var(--brass); }
+
+  button{
+    margin-top:10px;
+    background:var(--brass);
+    color:#151107;
+    border:none;
+    border-radius:4px;
+    padding:14px;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:14px;
+    font-weight:700;
+    letter-spacing:0.02em;
+    cursor:pointer;
+    transition: filter 0.15s ease, transform 0.15s ease;
+  }
+
+  button:hover{ filter:brightness(1.08); }
+  button:active{ transform:scale(0.98); }
+
+  .status{
+    min-height:18px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    font-weight:700;
+    color:var(--fog);
+    text-align:center;
+    margin-top:6px;
+  }
+
+  .status.error{ color:var(--error); }
+  .status.ok{ color:var(--ok); }
+
+  .result{
+    display:none;
+    text-align:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:20px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    color:var(--brass);
+    background:#0D131C;
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:12px;
+    margin-top:4px;
+  }
+
+  .result.show{ display:block; }
+
+  @media (prefers-reduced-motion: reduce){
+    .field input, button{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="panel" id="loginScreen">
+    <div class="eyebrow">Access</div>
+    <h1>Sign in</h1>
+    <p class="sub">Fill in all four fields to continue.</p>
+
+    <form id="loginForm" autocomplete="off">
+      <div class="field">
+        <label for="input1">LRN</label>
+        <input type="text" id="input1" name="input1">
+        <div class="email-preview" id="emailPreview"></div>
+      </div>
+      <div class="field">
+        <label for="input2">First name</label>
+        <input type="text" id="input2" name="input2">
+      </div>
+      <div class="field">
+        <label for="input3">Middle name</label>
+        <input type="text" id="input3" name="input3">
+      </div>
+      <div class="field">
+        <label for="input4">Last name</label>
+        <input type="text" id="input4" name="input4">
+      </div>
+
+      <button type="submit">Continue</button>
+      <div class="status" id="status" aria-live="polite"></div>
+    </form>
+  </div>
+
+  <div class="panel" id="resultScreen" style="display:none;">
+    <div class="eyebrow">Result</div>
+    <h1>Here's your code</h1>
+    <p class="sub">Built from LRN, First name, and Last name.</p>
+
+    <div class="result show" id="resultOutput"></div>
+
+    <button type="button" id="backBtn" style="margin-top:22px;">Back</button>
+  </div>
+
+<script>
+  const form = document.getElementById('loginForm');
+  const status = document.getElementById('status');
+  const fields = ['input1', 'input2', 'input3', 'input4'].map(id => document.getElementById(id));
+  const emailPreview = document.getElementById('emailPreview');
+
+  const EMAIL_DOMAIN = '@r3-1.deped.gov.ph';
+
+  fields[0].addEventListener('input', () => {
+    const digits = fields[0].value.trim();
+    if (/^\d{12}$/.test(digits)){
+      emailPreview.textContent = `${digits}${EMAIL_DOMAIN}`;
+      emailPreview.classList.add('show');
+    } else {
+      emailPreview.textContent = '';
+      emailPreview.classList.remove('show');
+    }
+  });
+
+  const loginScreen = document.getElementById('loginScreen');
+  const resultScreen = document.getElementById('resultScreen');
+  const resultOutput = document.getElementById('resultOutput');
+  const backBtn = document.getElementById('backBtn');
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const empty = fields.some(f => f.value.trim() === '');
+    if (empty){
+      status.textContent = "Fill in every field before continuing.";
+      status.className = "status error";
+      return;
+    }
+
+    const input1 = fields[0].value.trim();
+    const input2 = fields[1].value.trim();
+    const input4 = fields[3].value.trim();
+
+    // Input 1 must be exactly 12 digits
+    if (!/^\d{12}$/.test(input1)){
+      status.textContent = "LRN must be exactly 12 numbers.";
+      status.className = "status error";
+      return;
+    }
+
+    if (input2.length < 1 || input4.length < 1){
+      status.textContent = "Input 2 and Input 4 need at least one character.";
+      status.className = "status error";
+      return;
+    }
+
+    // Middle 6 digits: skip first 3 and last 3 of the 12 digits
+    const middle6 = input1.slice(3, 9);
+
+    // Prefix: first letter of Input 2 + first letter of Input 4
+    const prefix = (input2[0] + input4[0]).toUpperCase();
+
+    const combined = `${prefix}_${middle6}`;
+    const email = `${input1}${EMAIL_DOMAIN}`;
+
+    // Go to the result page
+    resultOutput.innerHTML = `Result: ${combined}<br><span style="font-size:14px; color:var(--fog); letter-spacing:0.02em;">${email}</span>`;
+    loginScreen.style.display = 'none';
+    resultScreen.style.display = 'block';
+  });
+
+  backBtn.addEventListener('click', () => {
+    resultScreen.style.display = 'none';
+    loginScreen.style.display = 'block';
+    status.textContent = '';
+    fields[0].focus();
+  });
+
+  fields[0].focus();
+</script>
+
+</body>
+</html>

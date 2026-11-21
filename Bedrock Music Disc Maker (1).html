@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bedrock Music Disc Maker</title>
+<style>
+:root{color-scheme:dark;--bg:#12161a;--pn:#1b2228;--ln:#2d3841;--tx:#e8f1ea;--mu:#93a499;--ac:#4cd04c;--bad:#ff7b7b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:14px 14px 0;max-width:1100px;margin:auto}h1{margin:0;font:700 22px/1.2 "Courier New",monospace;color:var(--ac)}h1 small{color:var(--mu);font-size:13px;font-weight:400}
+.wrap{max-width:1100px;margin:auto;padding:12px;display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:900px){.wrap{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}.side{position:sticky;top:12px;align-self:start}}
+.card{background:var(--pn);border:2px solid var(--ln);border-radius:8px;padding:14px;margin-bottom:12px}
+h2{margin:0 0 10px;font:700 16px "Courier New",monospace;color:var(--ac)}
+.mu{color:var(--mu);font-size:13px}.bad{color:var(--bad);font-size:13px}
+.drop{display:block;border:2px dashed #3f5a45;border-radius:8px;padding:22px 10px;text-align:center;cursor:pointer;background:#161d21}
+.drop.on,.drop:hover{border-color:var(--ac);background:#1a2a1d}
+#wf{width:100%;height:110px;display:block;background:#10161a;border-radius:6px;margin:10px 0;touch-action:none;cursor:ew-resize}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0}.row>*{flex:1 1 140px}
+label{display:block;font-size:13px;color:var(--mu)}label output{color:var(--tx);float:right}
+input[type=range]{width:100%;accent-color:var(--ac);margin:6px 0}
+input[type=text],select{width:100%;background:#10161a;color:var(--tx);border:2px solid var(--ln);border-radius:6px;padding:10px;font:inherit;min-height:44px}
+input[type=color]{width:100%;height:44px;border:2px solid var(--ln);border-radius:6px;background:#10161a;padding:2px}
+.btn{background:var(--ac);color:#06210a;border:0;border-radius:6px;padding:11px 14px;font:inherit;font-weight:700;cursor:pointer;min-height:44px;box-shadow:inset 0 -3px #0003;text-align:center}
+.btn.alt{background:#2a363e;color:var(--tx)}.btn:disabled{opacity:.4;cursor:not-allowed}.btn.sm{flex:0 0 auto}
+.sw{display:flex;flex-wrap:wrap;gap:8px}.sw button{width:40px;height:40px;border-radius:6px;border:2px solid var(--ln);cursor:pointer}.sw button.on{outline:3px solid var(--ac)}
+.pvbox{display:grid;place-items:center;padding:14px;border-radius:8px;background:conic-gradient(#2a323a 25%,#222a31 0 50%,#2a323a 0 75%,#222a31 0) 0 0/24px 24px}
+#pv{width:min(70vw,240px);height:min(70vw,240px);image-rendering:pixelated}
+.tip{margin-top:10px;background:#16051f;border:2px solid #3b1b5a;border-radius:4px;padding:8px 10px;font-family:"Courier New",monospace}.tip b{display:block;white-space:pre-wrap}.tip span{color:#a8a8a8;white-space:pre-wrap}
+code{background:#10161a;padding:2px 6px;border-radius:4px;word-break:break-all;user-select:all}
+ul{list-style:none;padding:0;margin:8px 0;font-size:13px}li.ok::before{content:"✔ ";color:var(--ac)}li.no::before{content:"✖ ";color:var(--bad)}li.no{color:var(--bad)}
+details{margin-top:8px}summary{cursor:pointer;color:var(--mu)}ol{padding-left:20px;margin:6px 0}
+</style></head><body>
+<header><h1>⛏ Music Disc Maker <small>Bedrock .mcaddon</small></h1></header>
+<div class="wrap"><div>
+<section class="card"><h2>1 · Audio</h2>
+<label class="drop" id="drop" for="af"><b>Drop a song here</b><br><span class="mu">or tap to choose · MP3, WAV, OGG</span></label>
+<input id="af" type="file" accept=".mp3,.wav,.ogg,audio/*" hidden>
+<div id="ainfo" class="mu" style="margin-top:8px">No audio loaded yet.</div>
+<canvas id="wf"></canvas>
+<div class="mu">Drag on the waveform (or use the sliders) to pick the part that plays.</div>
+<div class="row"><label>Start <output id="so">0:00.0</output><input id="sr" type="range" min="0" max="1" step=".01" value="0" disabled></label>
+<label>End <output id="eo">0:00.0</output><input id="er" type="range" min="0" max="1" step=".01" value="1" disabled></label></div>
+<div class="row"><button class="btn" id="pl" disabled>▶ Play</button><button class="btn alt" id="sp" disabled>■ Stop</button><button class="btn alt" id="rt" disabled>Reset trim</button><span class="mu" id="tm" style="flex:0 0 auto">0:00.0 / 0:00.0</span></div>
+<div class="row"><label>Volume <output id="vo">100%</output><input id="vol" type="range" min="0" max="200" value="100"></label>
+<label>Sample rate<select id="rate"><option value="22050">22.05 kHz (small)</option><option value="32000">32 kHz</option><option value="44100">44.1 kHz (best quality)</option></select></label></div>
+<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mono" checked> Mono (recommended: sound fades with distance from the jukebox)</label>
+<div class="mu" id="sz" style="margin-top:6px"></div></section>
+
+<section class="card"><h2>2 · Disc</h2>
+<div class="row"><label>Disc name<input type="text" id="nm" maxlength="40" placeholder="My Song"></label>
+<label>Description (shown under the name)<input type="text" id="ds" maxlength="60" placeholder="Artist - Title"></label></div>
+<label>Design</label><div class="sw" id="sw"></div>
+<div class="row"><label>Pattern<select id="pat"><option value="0">Classic groove</option><option value="1">Double groove</option><option value="2">Shiny</option></select></label>
+<label>Disc color<input type="color" id="c1" value="#3fae4a"></label><label>Label color<input type="color" id="c2" value="#1d5a2a"></label></div>
+<div class="row"><label class="btn alt sm" for="icf" style="color:var(--tx);cursor:pointer">⬆ Upload PNG cover</label><input id="icf" type="file" accept="image/png" hidden><button class="btn alt sm" id="icx" disabled>Use generated disc</button></div>
+<div class="mu">A cover PNG is cropped to a square and saved as a 32×32 item icon, keeping transparency.</div>
+<label style="margin-top:10px">Built-in disc sound this disc uses<select id="vs"></select></label><div class="mu">Bedrock only lets custom discs use a built-in disc slot, so while your packs are on, that slot plays your audio. Pick one you never use.</div><details><summary>Advanced</summary><label style="margin-top:8px">Namespace (letters, numbers, underscores)<input type="text" id="ns" value="custom" maxlength="20"></label></details></section>
+</div>
+<div class="side">
+<section class="card"><h2>Live preview</h2><div class="pvbox"><canvas id="pv" width="256" height="256"></canvas></div>
+<div class="tip"><b id="tn">Music Disc</b><span id="td"></span></div>
+<p class="mu">In-game: <code id="gv">/give @s custom:custom_disc</code></p></section>
+<section class="card"><h2>3 · Export</h2>
+<div class="row"><button class="btn" id="b1" disabled>⬇ Download .mcaddon</button></div>
+<div class="row"><button class="btn alt" id="b2" disabled>Resource Pack ZIP</button><button class="btn alt" id="b3" disabled>Behavior Pack ZIP</button></div>
+<div class="row"><button class="btn alt" id="bv" disabled>Validate only</button><button class="btn alt" id="clr">Clear all</button></div>
+<div id="msg" class="mu" role="status"></div><ul id="chk"></ul>
+<details><summary>How to install</summary><ol class="mu"><li style="all:unset;display:list-item">If your download ends in <code>.mcaddon.zip</code>, rename it to end in <code>.mcaddon</code>. Pack ZIPs can be renamed to <code>.mcpack</code>.</li><li style="all:unset;display:list-item">Open the file with Minecraft Bedrock to import it.</li><li style="all:unset;display:list-item">Enable both the Resource Pack and the Behavior Pack on your world. The icon stays invisible and nothing plays without the Resource Pack. If the disc is missing, also turn on the world’s Experiments.</li><li style="all:unset;display:list-item">Run the /give command above, put the disc in a jukebox, and listen.</li></ol></details></section>
+</div></div>
+<script>
+const $=s=>document.querySelector(s),ACX=window.AudioContext||window.webkitAudioContext;
+const uid=()=>crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c=='x'?r:r&3|8).toString(16)});
+const S={buf:null,name:'',s:0,e:0,vol:1,rate:22050,mono:true,pat:0,c1:'#3fae4a',c2:'#1d5a2a',icon:null,id:[uid(),uid(),uid(),uid()]};
+const fmt=t=>{t=Math.max(0,t);return Math.floor(t/60)+':'+(t%60).toFixed(1).padStart(4,'0')};
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+const msg=(t,b)=>{$('#msg').textContent=t;$('#msg').className=b?'bad':'mu'};
+let AC,P=null,pos=0,peaks=[],raf=0,DL=null,busy=false;
+try{if(window.claude&&claude.use)claude.use('downloads').then(d=>DL=d).catch(()=>{})}catch(_){}
+
+/* ---------- audio loading ---------- */
+async function loadAudio(f){
+ if(!f)return;
+ if(!/\.(mp3|wav|ogg)$/i.test(f.name)&&!/^audio\//.test(f.type)){msg('Please choose an MP3, WAV or OGG file.',1);return}
+ halt();pos=0;AC=AC||new ACX();
+ try{msg('Decoding…');S.buf=await AC.decodeAudioData(await f.arrayBuffer())}
+ catch(e){msg('Could not decode that file. Safari cannot read OGG; try MP3 or WAV.',1);return}
+ S.name=f.name;S.s=0;S.e=S.buf.duration;
+ const b=S.buf,ch=[...Array(b.numberOfChannels)].map((_,i)=>b.getChannelData(i)),N=600,st=b.length/N;peaks=[];
+ for(let i=0;i<N;i++){let m=0;const a=Math.floor(i*st),z=Math.max(a+1,Math.floor((i+1)*st)),sk=Math.max(1,(z-a)>>5);for(const c of ch)for(let j=a;j<z;j+=sk)m=Math.max(m,Math.abs(c[j]));peaks.push(m)}
+ ['sr','er'].forEach(i=>{$('#'+i).max=b.duration;$('#'+i).disabled=false});
+ $('#sr').value=0;$('#er').value=b.duration;
+ if(!$('#nm').value)$('#nm').value=f.name.replace(/\.[^.]+$/,'').slice(0,40);
+ msg('Audio loaded.');ui();pv();
+}
+$('#af').onchange=e=>{loadAudio(e.target.files[0]);e.target.value=''};
+const dr=$('#drop');
+['dragenter','dragover'].forEach(n=>dr.addEventListener(n,e=>{e.preventDefault();dr.classList.add('on')}));
+['dragleave','drop'].forEach(n=>dr.addEventListener(n,e=>{e.preventDefault();dr.classList.remove('on')}));
+dr.addEventListener('drop',e=>loadAudio(e.dataTransfer.files[0]));
+['dragover','drop'].forEach(n=>addEventListener(n,e=>e.preventDefault()));
+
+/* ---------- trim, waveform, playback ---------- */
+const gap=()=>Math.min(.5,S.buf.duration);
+function trim(s,e){const d=S.buf.duration;S.s=Math.min(Math.max(0,s),d);S.e=Math.min(Math.max(e,S.s),d);halt();pos=0;$('#sr').value=S.s;$('#er').value=S.e;ui()}
+$('#sr').oninput=e=>trim(Math.min(+e.target.value,S.e-gap()),S.e);
+$('#er').oninput=e=>trim(S.s,Math.max(+e.target.value,S.s+gap()));
+$('#rt').onclick=()=>trim(0,S.buf.duration);
+const wf=$('#wf');let drag=null;
+const tx=e=>{const r=wf.getBoundingClientRect();return Math.min(1,Math.max(0,(e.clientX-r.left)/r.width))*S.buf.duration};
+function mv(e){const t=tx(e),g=gap();drag=='s'?trim(Math.min(t,S.e-g),S.e):trim(S.s,Math.max(t,S.s+g))}
+wf.onpointerdown=e=>{if(!S.buf)return;const t=tx(e);drag=Math.abs(t-S.s)<Math.abs(t-S.e)?'s':'e';wf.setPointerCapture(e.pointerId);mv(e)};
+wf.onpointermove=e=>{if(drag)mv(e)};wf.onpointerup=wf.onpointercancel=()=>drag=null;
+const cur=()=>P?pos+AC.currentTime-P.t0:pos;
+function draw(){
+ const w=wf.clientWidth,h=110,r=devicePixelRatio||1;if(!w)return;
+ if(wf.width!==Math.round(w*r)){wf.width=Math.round(w*r);wf.height=h*r}
+ const x=wf.getContext('2d');x.setTransform(r,0,0,r,0,0);x.clearRect(0,0,w,h);
+ if(!S.buf){x.fillStyle='#4a5a52';x.font='13px system-ui';x.textAlign='center';x.fillText('Waveform appears here',w/2,h/2);return}
+ const d=S.buf.duration,xs=S.s/d*w,xe=S.e/d*w;
+ peaks.forEach((p,i)=>{const px=i/peaks.length*w,bh=Math.max(1,p*h*.9);x.fillStyle=px>=xs&&px<=xe?'#4cd04c':'#3b4a41';x.fillRect(px,(h-bh)/2,Math.max(1,w/peaks.length),bh)});
+ x.fillStyle='#fff';x.fillRect(xs,0,3,h);x.fillRect(xe-3,0,3,h);
+ if(P||pos){x.fillStyle='#ffd34d';x.fillRect((S.s+cur())/d*w-1,0,2,h)}
+}
+function tick(){draw();$('#pl').textContent=P?'❚❚ Pause':'▶ Play';$('#tm').textContent=fmt(cur())+' / '+fmt(S.buf?S.e-S.s:0)}
+function loop(){tick();if(P)raf=requestAnimationFrame(loop)}
+function halt(){cancelAnimationFrame(raf);if(P){const s=P.src;P=null;s.onended=null;try{s.stop()}catch(_){}}}
+function play(){
+ if(!S.buf)return;if(P){pos=cur();halt();tick();return}
+ AC.resume();const dur=S.e-S.s;if(pos>=dur-.02)pos=0;
+ const src=AC.createBufferSource(),g=AC.createGain();src.buffer=S.buf;g.gain.value=S.vol;src.connect(g);g.connect(AC.destination);
+ src.start(0,S.s+pos,dur-pos);P={src,g,t0:AC.currentTime};
+ src.onended=()=>{if(P&&P.src===src){P=null;pos=0;tick()}};loop();
+}
+$('#pl').onclick=play;$('#sp').onclick=()=>{halt();pos=0;tick()};
+$('#vol').oninput=e=>{S.vol=e.target.value/100;$('#vo').textContent=e.target.value+'%';if(P)P.g.gain.value=S.vol};
+$('#rate').onchange=e=>{S.rate=+e.target.value;ui()};$('#mono').onchange=e=>{S.mono=e.target.checked;ui()};
+addEventListener('resize',draw);
+
+/* ---------- disc art ---------- */
+const VAN=['13','cat','blocks','chirp','far','mall','mellohi','stal','strad','ward','11','wait','pigstep','otherside','5','relic'];
+const PRE=[['Cat','#3fae4a','#1d5a2a'],['Blocks','#e0762c','#7a3a12'],['Chirp','#c83a3a','#6e1414'],['Far','#8fd14f','#3d6a1a'],['Mall','#a24fd1','#4b1a6e'],['Mellohi','#d14f9a','#6e1a47'],['Stal','#3a3a44','#16161c'],['Ward','#2f7f6a','#103a30'],['Wait','#3a7ad1','#14336e'],['Pigstep','#d1a24f','#5a3a14']];
+const shade=(h,a)=>'#'+[16,8,0].map(s=>Math.min(255,Math.max(0,(parseInt(h.slice(1),16)>>s&255)+a)).toString(16).padStart(2,'0')).join('');
+const G=document.createElement('canvas');G.width=G.height=16;
+function gen(){
+ const x=G.getContext('2d');x.clearRect(0,0,16,16);
+ for(let j=0;j<16;j++)for(let i=0;i<16;i++){
+  const dx=i-7.5,dy=j-7.5,r=Math.hypot(dx,dy);let c=null;
+  if(r<=7.6&&r>1.3){
+   if(r<3.7)c=r>2.9?shade(S.c2,-25):S.c2;
+   else if(r>6.6)c=shade(S.c1,-45);
+   else{c=S.c1;
+    if(S.pat==0&&r>4.4&&r<5.1)c=shade(c,-30);
+    if(S.pat==1&&((r>4.3&&r<4.9)||(r>5.5&&r<6.1)))c=shade(c,-30);
+    if(S.pat==2&&dx+dy<-3&&r>4)c=shade(c,50)}}
+  if(c){x.fillStyle=c;x.fillRect(i,j,1,1)}}
+ return G}
+const icon=()=>S.icon||gen();
+const ids=()=>{let ns=slug($('#ns').value)||'custom';if(ns=='minecraft')ns='custom';const sl=slug($('#nm').value)||'custom_disc';return{ns,sl,id:ns+':'+sl,ev:$('#vs').value,tx:ns+'_'+sl}};
+function pv(){
+ const c=$('#pv').getContext('2d');c.imageSmoothingEnabled=false;c.clearRect(0,0,256,256);c.drawImage(icon(),0,0,256,256);
+ $('#tn').textContent=$('#nm').value.trim()||'Music Disc';$('#td').textContent=$('#ds').value.trim();$('#gv').textContent='/give @s '+ids().id;
+ $('#icx').disabled=!S.icon;gate();
+}
+function gate(){const ok=!!S.buf&&!!$('#nm').value.trim();['b1','b2','b3','bv'].forEach(i=>$('#'+i).disabled=!ok)}
+function ui(){
+ const on=!!S.buf;['pl','sp','rt'].forEach(i=>$('#'+i).disabled=!on);
+ if(on){const n=S.mono?1:Math.min(2,S.buf.numberOfChannels),mb=(S.e-S.s)*S.rate*n*2/1048576;
+  $('#ainfo').textContent='♪ '+S.name+' · '+fmt(S.buf.duration)+' long · '+fmt(S.e-S.s)+' selected';
+  $('#so').textContent=fmt(S.s);$('#eo').textContent=fmt(S.e);
+  $('#sz').textContent='Estimated addon audio size: '+mb.toFixed(1)+' MB (WAV)'+(mb>40?' · large! Trim, use mono or a lower sample rate.':'')}
+ tick();gate();
+}
+const sw=$('#sw');
+PRE.forEach(([n,a,b],i)=>{const e=document.createElement('button');e.title=n;e.setAttribute('aria-label',n+' design');e.style.background='linear-gradient(135deg,'+a+' 55%,'+b+' 55%)';
+ e.onclick=()=>{S.c1=a;S.c2=b;$('#c1').value=a;$('#c2').value=b;S.icon=null;pv();[...sw.children].forEach(k=>k.classList.toggle('on',k===e))};sw.append(e)});
+sw.children[0].classList.add('on');
+$('#c1').oninput=e=>{S.c1=e.target.value;S.icon=null;pv()};$('#c2').oninput=e=>{S.c2=e.target.value;S.icon=null;pv()};
+$('#pat').onchange=e=>{S.pat=+e.target.value;S.icon=null;pv()};
+$('#vs').innerHTML=VAN.map(v=>'<option>'+v+'</option>').join('');$('#vs').value='relic';$('#vs').onchange=pv;
+['nm','ds','ns'].forEach(i=>$('#'+i).oninput=pv);
+$('#icf').onchange=async e=>{
+ const f=e.target.files[0];e.target.value='';if(!f)return;
+ if(f.type!='image/png'&&!/\.png$/i.test(f.name)){msg('Cover must be a PNG file.',1);return}
+ try{const b=await createImageBitmap(f),s=Math.min(b.width,b.height),c=document.createElement('canvas');c.width=c.height=32;
+  const x=c.getContext('2d');x.imageSmoothingEnabled=s>32;x.drawImage(b,(b.width-s)/2,(b.height-s)/2,s,s,0,0,32,32);S.icon=c;msg('Cover applied.');pv()}
+ catch(_){msg('Could not read that image.',1)}};
+$('#icx').onclick=()=>{S.icon=null;pv()};
+
+/* ---------- audio render + WAV ---------- */
+async function render(){
+ const dur=S.e-S.s,n=S.mono?1:Math.min(2,S.buf.numberOfChannels),OC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+ const oc=new OC(n,Math.max(1,Math.ceil(dur*S.rate)),S.rate),src=oc.createBufferSource(),g=oc.createGain();
+ src.buffer=S.buf;g.gain.value=S.vol;src.connect(g);g.connect(oc.destination);src.start(0,S.s,dur);
+ const r=await oc.startRendering(),L=r.length,ch=[...Array(n)].map((_,i)=>r.getChannelData(i)),dl=L*n*2,u=new Uint8Array(44+dl),v=new DataView(u.buffer);
+ const w=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+ w(0,'RIFF');v.setUint32(4,36+dl,true);w(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,n,true);v.setUint32(24,S.rate,true);v.setUint32(28,S.rate*n*2,true);v.setUint16(32,n*2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,dl,true);
+ let o=44;for(let i=0;i<L;i++)for(let c=0;c<n;c++){const s=Math.max(-1,Math.min(1,ch[c][i]));v.setInt16(o,s<0?s*32768:s*32767,true);o+=2}
+ return u}
+
+/* ---------- ZIP (stored) ---------- */
+const CT=new Uint32Array(256).map((_,n)=>{let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;return c>>>0});
+const crc32=d=>{let c=0xFFFFFFFF;for(let i=0;i<d.length;i++)c=CT[(c^d[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0};
+const cat=a=>{const u=new Uint8Array(a.reduce((s,x)=>s+x.length,0));let o=0;a.forEach(x=>{u.set(x,o);o+=x.length});return u};
+function zip(F){
+ const en=new TextEncoder(),P=[],C=[];let o=0;
+ for(const[n,d]of Object.entries(F)){
+  const nb=en.encode(n),c=crc32(d),h=new DataView(new ArrayBuffer(30));
+  h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(12,0x21,true);h.setUint32(14,c,true);h.setUint32(18,d.length,true);h.setUint32(22,d.length,true);h.setUint16(26,nb.length,true);
+  const q=new DataView(new ArrayBuffer(46));
+  q.setUint32(0,0x02014b50,true);q.setUint16(4,20,true);q.setUint16(6,20,true);q.setUint16(8,0x0800,true);q.setUint16(14,0x21,true);q.setUint32(16,c,true);q.setUint32(20,d.length,true);q.setUint32(24,d.length,true);q.setUint16(28,nb.length,true);q.setUint32(42,o,true);
+  P.push(new Uint8Array(h.buffer),nb,d);C.push(new Uint8Array(q.buffer),nb);o+=30+nb.length+d.length}
+ const cd=cat(C),e=new DataView(new ArrayBuffer(22)),n=Object.keys(F).length;
+ e.setUint32(0,0x06054b50,true);e.setUint16(8,n,true);e.setUint16(10,n,true);e.setUint32(12,cd.length,true);e.setUint32(16,o,true);
+ return cat([...P,cd,new Uint8Array(e.buffer)])}
+function unzip(u){
+ const v=new DataView(u.buffer,u.byteOffset,u.length),dc=new TextDecoder();let i=u.length-22;
+ while(i>=0&&v.getUint32(i,true)!==0x06054b50)i--;if(i<0)throw Error('end record missing');
+ const n=v.getUint16(i+10,true);let p=v.getUint32(i+16,true);const R={};
+ for(let k=0;k<n;k++){
+  if(v.getUint32(p,true)!==0x02014b50)throw Error('bad directory');
+  const c=v.getUint32(p+16,true),cs=v.getUint32(p+20,true),nl=v.getUint16(p+28,true),el=v.getUint16(p+30,true),cl=v.getUint16(p+32,true),lo=v.getUint32(p+42,true),nm=dc.decode(u.subarray(p+46,p+46+nl));
+  const a=lo+30+v.getUint16(lo+26,true)+v.getUint16(lo+28,true),d=u.subarray(a,a+cs);
+  if(crc32(d)!==c)throw Error('CRC mismatch in '+nm);R[nm]=d;p+=46+nl+el+cl}
+ return R}
+
+/* ---------- addon build + validation ---------- */
+const J=o=>new TextEncoder().encode(JSON.stringify(o,null,2)),TX=s=>new TextEncoder().encode(s);
+const pre=(p,m)=>Object.fromEntries(Object.entries(m).map(([a,b])=>[p+'/'+a,b]));
+async function build(){
+ const k=ids(),nm=$('#nm').value.trim(),ds=$('#ds').value.trim(),wav=await render(),sec=S.e-S.s;
+ const blob=await new Promise(r=>icon().toBlob(r,'image/png')),png=new Uint8Array(await blob.arrayBuffer());
+ const man=(type,name,u,mu,dep)=>({format_version:2,header:{name,description:ds||'Custom music disc',uuid:u,version:[1,0,0],min_engine_version:[1,21,40]},modules:[{type,uuid:mu,version:[1,0,0],description:name}],...(dep?{dependencies:[{uuid:dep,version:[1,0,0]}]}:{})});
+ const RP={'manifest.json':J(man('resources',nm+' RP',S.id[0],S.id[1])),'pack_icon.png':png,
+  'textures/item_texture.json':J({resource_pack_name:k.sl,texture_name:'atlas.items',texture_data:{[k.tx]:{textures:'textures/items/'+k.tx}}}),
+  ['textures/items/'+k.tx+'.png']:png,
+  'sounds/sound_definitions.json':J({format_version:'1.14.0',sound_definitions:{['record.'+k.ev]:{category:'record',max_distance:64,sounds:[{name:'sounds/records/'+k.sl,stream:true,volume:1,load_on_low_memory:true}]}}}),
+  ['sounds/records/'+k.sl+'.wav']:wav,'texts/en_US.lang':TX('item.'+k.id+'='+nm+'\nitem.record_'+k.ev+'.desc='+(ds||nm)+'\n'),'texts/languages.json':J(['en_US'])};
+ const BP={'manifest.json':J(man('data',nm+' BP',S.id[2],S.id[3],S.id[0])),'pack_icon.png':png,
+  ['items/'+k.sl+'.json']:J({format_version:'1.21.40','minecraft:item':{description:{identifier:k.id,menu_category:{category:'items'}},components:{'minecraft:icon':k.tx,'minecraft:display_name':{value:ds?nm+'\n§7'+ds:nm},'minecraft:max_stack_size':1,'minecraft:record':{comparator_signal:1,duration:Math.ceil(sec),sound_event:k.ev}}}})};
+ const Z={rp:zip(RP),bp:zip(BP),mc:zip({...pre(k.sl+'_RP',RP),...pre(k.sl+'_BP',BP)})};
+ return{k,RP,BP,Z,res:check(k,RP,BP,Z)}}
+function check(k,RP,BP,Z){
+ const R=[],dc=new TextDecoder(),pj=u=>JSON.parse(dc.decode(u)),UU=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+ const t=(m,f)=>{try{R.push([f()!==false,m])}catch(e){R.push([false,m+' — '+(e.message||e)])}};
+ const rm=pj(RP['manifest.json']),bm=pj(BP['manifest.json']),sd=pj(RP['sounds/sound_definitions.json']),it=pj(BP['items/'+k.sl+'.json']);
+ t('Manifests are valid JSON with valid UUIDs',()=>[rm.header.uuid,rm.modules[0].uuid,bm.header.uuid,bm.modules[0].uuid].every(u=>UU.test(u)));
+ t('All four manifest UUIDs are unique',()=>new Set(S.id).size===4);
+ t('Behavior pack depends on the resource pack',()=>bm.dependencies[0].uuid===rm.header.uuid);
+ t('Item identifier is valid ('+k.id+')',()=>/^[a-z0-9_]+:[a-z0-9_]+$/.test(it['minecraft:item'].description.identifier));
+ const rc=it['minecraft:item'].components['minecraft:record'];
+ t('Disc uses a vanilla sound event ('+rc.sound_event+') that the pack overrides',()=>VAN.includes(rc.sound_event)&&!!sd.sound_definitions['record.'+rc.sound_event]);
+ t('Disc has a valid duration ('+rc.duration+' s)',()=>rc.duration>=1);
+ const sn=sd.sound_definitions['record.'+rc.sound_event].sounds[0].name+'.wav',w=RP[sn];
+ t('Sound file exists at '+sn,()=>!!w);
+ t('Sound file is a valid PCM WAV with audio data',()=>{const v=new DataView(w.buffer,w.byteOffset,w.length);return String.fromCharCode(...w.subarray(0,4))=='RIFF'&&String.fromCharCode(...w.subarray(8,12))=='WAVE'&&v.getUint16(20,true)==1&&v.getUint32(40,true)>0&&v.getUint32(40,true)===w.length-44});
+ const itx=pj(RP['textures/item_texture.json']).texture_data[k.tx].textures+'.png',ic=RP[itx];
+ t('Icon texture exists and is a PNG',()=>!!ic&&ic[0]==0x89&&ic[1]==0x50&&ic[2]==0x4E&&ic[3]==0x47);
+ t('Item icon key matches item_texture.json',()=>it['minecraft:item'].components['minecraft:icon']===k.tx);
+ const exp={rp:RP,bp:BP,mc:{...pre(k.sl+'_RP',RP),...pre(k.sl+'_BP',BP)}};
+ for(const[z,lbl]of[['rp','Resource pack'],['bp','Behavior pack'],['mc','.mcaddon']])
+  t(lbl+' ZIP re-reads cleanly (CRC checked)',()=>{const u=unzip(Z[z]),a=Object.keys(u),b=Object.keys(exp[z]);return a.length===b.length&&b.every(n=>u[n]&&u[n].length===exp[z][n].length)});
+ return R}
+function show(R){const u=$('#chk');u.innerHTML='';R.forEach(([ok,m])=>{const l=document.createElement('li');l.className=ok?'ok':'no';l.textContent=m;u.append(l)})}
+
+/* ---------- export ---------- */
+async function save(name,u8,note){
+ const real=name,fn=DL&&!/\.zip$/i.test(name)?name+'.zip':name;
+ if(DL){try{await DL.save({filename:fn,data:new Blob([u8])});msg('Saved as '+fn+'. '+note)}catch(e){msg(e&&e.code=='declined'?'Save cancelled.':'Could not save the file ('+((e&&e.code)||'error')+').',1)}return}
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([u8]));a.download=real;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);msg('Downloading '+real+'… '+note)}
+async function exp(kind){
+ if(busy)return;busy=true;msg('Building and validating…');
+ try{const B=await build();show(B.res);
+  if(B.res.some(r=>!r[0])){msg('Validation failed. See the checklist.',1);return}
+  const s=B.k.sl;
+  if(kind=='v')msg('All '+B.res.length+' checks passed. Addon size '+(B.Z.mc.length/1048576).toFixed(2)+' MB.');
+  else if(kind=='mc')await save(s+'.mcaddon',B.Z.mc,DL?'Rename it to '+s+'.mcaddon (remove “.zip”), then open it with Minecraft.':'Open it with Minecraft.');
+  else await save(s+(kind=='rp'?'_RP':'_BP')+'.zip',B.Z[kind],'Rename to .mcpack to import it directly.')}
+ catch(e){msg('Export failed: '+(e.message||e),1)}finally{busy=false}}
+$('#b1').onclick=()=>exp('mc');$('#b2').onclick=()=>exp('rp');$('#b3').onclick=()=>exp('bp');$('#bv').onclick=()=>exp('v');
+$('#clr').onclick=()=>{halt();pos=0;Object.assign(S,{buf:null,name:'',s:0,e:0,icon:null,vol:1,rate:22050,mono:true,pat:0,c1:'#3fae4a',c2:'#1d5a2a',id:[uid(),uid(),uid(),uid()]});peaks=[];
+ $('#nm').value=$('#ds').value='';$('#vs').value='relic';$('#ns').value='custom';$('#vol').value=100;$('#vo').textContent='100%';$('#rate').value=22050;$('#mono').checked=true;$('#pat').value=0;$('#c1').value=S.c1;$('#c2').value=S.c2;
+ ['sr','er'].forEach(i=>$('#'+i).disabled=true);$('#ainfo').textContent='No audio loaded yet.';$('#sz').textContent='';$('#chk').innerHTML='';
+ [...sw.children].forEach((k,i)=>k.classList.toggle('on',!i));msg('Cleared. Ready for a new disc.');tick();pv()};
+ui();pv();
+</script></body></html>
